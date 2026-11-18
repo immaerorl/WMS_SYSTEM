@@ -1,0 +1,698 @@
+# SYSTEMS_DESIGN_DOCUMENT.md
+
+# Warehouse Inventory & Expiry Management System (WIEMS)
+
+Version: 1.0
+Author: Copilot
+Status: Draft
+
+---
+
+# 1. Executive Summary
+
+## Problem Statement
+
+The current inventory management process relies heavily on Google Sheets.
+
+Current issues include:
+
+- New inventory arrivals are not updated consistently.
+- Expiry dates are not monitored proactively.
+- Items are categorized inconsistently.
+- Duplicate item records appear under different categories.
+- Difficult item searching and tracking.
+- No centralized inventory history.
+- No automated notification for expiring items.
+- Heavy dependence on employee memory.
+
+Example:
+
+SKU: GZ001
+
+Sterile Gauze may appear under:
+
+- First Aid
+- Disposable
+
+causing confusion, duplicate tracking, inaccurate stock reporting, and potential purchasing mistakes.
+
+---
+
+# 2. Business Objectives
+
+The system should:
+
+1. Create a Single Source of Truth for all inventory.
+2. Prevent duplicate SKU creation.
+3. Track inventory batches and expiry dates.
+4. Automatically generate expiry alerts.
+5. Provide fast item search capability.
+6. Support both desktop and mobile devices.
+7. Support barcode scanning where available.
+8. Allow controlled category management.
+9. Track inventory movements.
+10. Reduce inventory loss due to expiry.
+
+---
+
+# 3. User Roles
+
+## 3.1 System Administrator
+
+Permissions:
+
+- Manage users
+- Create roles
+- Create categories
+- Edit categories
+- Manage system settings
+- View all reports
+- Import inventory via Excel
+
+---
+
+## 3.2 Warehouse Supervisor
+
+Permissions:
+
+- Approve stock receiving
+- Approve stock adjustments
+- View reports
+- Manage inventory
+
+---
+
+## 3.3 Warehouse Staff
+
+Permissions:
+
+- Receive stock
+- Issue stock
+- Scan barcodes
+- Create stock entries
+- Search inventory
+
+Restrictions:
+
+- Cannot create categories
+- Cannot manage users
+
+---
+
+## 3.4 Viewer
+
+Permissions:
+
+- Search inventory
+- View reports
+- View stock information
+
+Restrictions:
+
+- Cannot modify data
+
+---
+
+# 4. Core Modules
+
+## Module 1: Item Master
+
+Purpose:
+
+Maintain a single master record for each product.
+
+### Features
+
+- SKU Management
+- Product Registration
+- Category Assignment
+- Unit Cost Tracking
+- Barcode Support
+
+### Rules
+
+One SKU = One Item
+
+Example:
+
+SKU: GZ001
+Name: Sterile Gauze 10x10
+
+Category:
+First Aid
+
+System prevents creation of:
+
+SKU: GZ001
+Category: Disposable
+
+unless authorized adjustment is performed.
+
+---
+
+## Module 2: Category Management
+
+### Purpose
+
+Standardize inventory classification.
+
+### Features
+
+- Create Category
+- Edit Category
+- Disable Category
+
+### Access
+
+Only:
+
+- Administrator
+- Authorized Personnel
+
+### Example Categories
+
+- First Aid
+- Disposable
+- PPE
+- Medical Devices
+- Consumables
+- Chemicals
+- Office Supplies
+
+---
+
+## Module 3: Inventory Receiving
+
+### Current Workflow
+
+Receive Item
+→ Verify Invoice
+→ Record in Google Sheet
+→ Store Inventory
+
+### New Workflow
+
+Create PO
+→ Receive PO
+→ Verify Quantity
+→ Record Batch
+→ Record Expiry Date
+→ Store Inventory
+→ System Updates Inventory
+
+### Inputs
+
+- PO Number
+- Supplier
+- SKU
+- Quantity
+- Unit Cost
+- Batch Number
+- MFG Date
+- Expiry Date
+
+---
+
+## Module 4: Inventory Issue
+
+Purpose:
+
+Track stock leaving warehouse.
+
+### Inputs
+
+- SKU
+- Quantity
+- Requestor
+- Department
+- Remarks
+
+### Outputs
+
+Inventory reduced automatically.
+
+---
+
+## Module 5: Expiry Management
+
+Critical module.
+
+### Automatic Status
+
+#### Healthy
+
+Expiry > 90 days
+
+#### Warning
+
+Expiry <= 90 days
+
+#### Critical
+
+Expiry <= 30 days
+
+#### Expired
+
+Current Date > Expiry Date
+
+---
+
+### Dashboard Widgets
+
+Show:
+
+- Total Expired Items
+- Expiring in 90 Days
+- Expiring in 30 Days
+- Inventory Value at Risk
+
+---
+
+### Notifications
+
+System should send alerts:
+
+- 90 days before expiry
+- 60 days before expiry
+- 30 days before expiry
+- 7 days before expiry
+
+Channels:
+
+- Dashboard Notifications
+- Email Notifications
+
+Future:
+
+- WhatsApp Integration
+
+---
+
+# 5. Barcode System
+
+## Supported Modes
+
+### Mode 1
+
+Manual Entry
+
+User enters:
+
+- SKU
+- Quantity
+
+---
+
+### Mode 2
+
+Barcode Scan
+
+Supported Devices:
+
+- Mobile Camera
+- USB Barcode Scanner
+
+Process:
+
+Scan
+→ Retrieve Item
+→ Display Current Inventory
+→ Perform Transaction
+
+---
+
+# 6. Search System
+
+Purpose:
+
+Fast inventory lookup.
+
+Search By:
+
+- SKU
+- Item Name
+- Barcode
+- Batch Number
+- Category
+
+---
+
+## Search Results
+
+Display:
+
+- SKU
+- Item Name
+- Category
+- Current Quantity
+- Unit Cost
+- Total Value
+- Nearest Expiry Date
+- Storage Location
+- Batch Information
+
+---
+
+# 7. Storage Location Management
+
+Optional but recommended.
+
+Structure:
+
+Warehouse
+→ Zone
+→ Rack
+→ Shelf
+
+Example:
+
+Warehouse A
+Zone B
+Rack 03
+Shelf A2
+
+Display location in search results.
+
+---
+
+# 8. Inventory Dashboard
+
+## KPI Cards
+
+### Inventory Summary
+
+- Total SKUs
+- Total Inventory Units
+- Inventory Value
+
+### Expiry Summary
+
+- Healthy Stock
+- Warning Stock
+- Critical Stock
+- Expired Stock
+
+### Stock Summary
+
+- Low Stock
+- Out of Stock
+- Overstock
+
+---
+
+# 9. Audit Trail
+
+Every activity must be recorded.
+
+Track:
+
+- User
+- Date
+- Time
+- Action
+
+Example:
+
+2026-08-12 09:45
+
+User:
+John
+
+Action:
+Received Inventory
+
+SKU:
+GZ001
+
+Quantity:
+500
+
+---
+
+# 10. Import & Migration
+
+## Initial Data Migration
+
+Source:
+
+Google Sheets Export
+
+Format:
+
+Excel (.xlsx)
+
+---
+
+## Import Validation
+
+Validate:
+
+- SKU uniqueness
+- Category existence
+- Expiry format
+- Date format
+- Duplicate records
+
+---
+
+# 11. Database Design
+
+## Table: users
+
+| Field | Type |
+|---------|---------|
+| id | UUID |
+| username | VARCHAR |
+| email | VARCHAR |
+| role_id | UUID |
+| created_at | DATETIME |
+
+---
+
+## Table: roles
+
+| Field | Type |
+|---------|---------|
+| id | UUID |
+| role_name | VARCHAR |
+
+---
+
+## Table: categories
+
+| Field | Type |
+|---------|---------|
+| id | UUID |
+| category_name | VARCHAR |
+| active | BOOLEAN |
+
+---
+
+## Table: items
+
+| Field | Type |
+|---------|---------|
+| id | UUID |
+| sku | VARCHAR |
+| item_name | VARCHAR |
+| category_id | UUID |
+| barcode | VARCHAR |
+| active | BOOLEAN |
+
+---
+
+## Table: inventory_batches
+
+| Field | Type |
+|---------|---------|
+| id | UUID |
+| item_id | UUID |
+| batch_no | VARCHAR |
+| quantity | INTEGER |
+| unit_cost | DECIMAL |
+| mfg_date | DATE |
+| expiry_date | DATE |
+| location_id | UUID |
+
+---
+
+## Table: stock_movements
+
+| Field | Type |
+|---------|---------|
+| id | UUID |
+| item_id | UUID |
+| movement_type | VARCHAR |
+| quantity | INTEGER |
+| reference_number | VARCHAR |
+| created_by | UUID |
+| created_at | DATETIME |
+
+---
+
+## Table: purchase_orders
+
+| Field | Type |
+|---------|---------|
+| id | UUID |
+| po_number | VARCHAR |
+| supplier_id | UUID |
+| status | VARCHAR |
+
+---
+
+## Table: suppliers
+
+| Field | Type |
+|---------|---------|
+| id | UUID |
+| supplier_name | VARCHAR |
+| email | VARCHAR |
+
+---
+
+## Table: locations
+
+| Field | Type |
+|---------|---------|
+| id | UUID |
+| warehouse |
+| zone |
+| rack |
+| shelf |
+
+---
+
+# 12. Recommended Tech Stack
+
+## Frontend
+
+- React
+- Next.js
+- Tailwind CSS
+
+Benefits:
+
+- Mobile-friendly
+- Fast UI
+- Modern development ecosystem
+
+---
+
+## Backend
+
+- Node.js
+- NestJS
+
+Benefits:
+
+- Structured architecture
+- Scalable
+- Excellent API support
+
+---
+
+## Database
+
+PostgreSQL
+
+Benefits:
+
+- Reliable
+- Scalable
+- Strong reporting capability
+
+---
+
+## Authentication
+
+JWT + Role Based Access Control
+
+---
+
+## Barcode Scanning
+
+- ZXing Library
+- Mobile Camera Support
+
+---
+
+## Notification Service
+
+- Email (SMTP)
+- Future WhatsApp Integration
+
+---
+
+# 13. API Examples
+
+GET /api/items
+
+Returns all items.
+
+---
+
+POST /api/items
+
+Create new inventory item.
+
+---
+
+GET /api/items/search?keyword=gauze
+
+Search inventory.
+
+---
+
+POST /api/receiving
+
+Receive inventory batch.
+
+---
+
+POST /api/stock-out
+
+Issue inventory.
+
+---
+
+GET /api/expiry-alerts
+
+Return all expiring items.
+
+---
+
+# 14. Future Enhancements
+
+Phase 2:
+
+- QR Code Labels
+- WhatsApp Alerts
+- Supplier Portal
+- Procurement Forecasting
+- Inventory Demand Prediction
+- AI Expiry Risk Analysis
+
+Phase 3:
+
+- Multi-Warehouse Management
+- Stock Transfer Between Warehouses
+- Mobile App
+- Offline Warehouse Operations
+
+---
+
+# 15. Success Metrics
+
+The system is considered successful when:
+
+- 100% inventory tracked through system
+- No duplicate SKU records
+- Expired inventory reduced by at least 80%
+- Inventory search under 2 seconds
+- Stock receiving operation completed within 3 minutes
+- Accurate inventory visibility across all users
+
+---
+
+END OF DOCUMENT

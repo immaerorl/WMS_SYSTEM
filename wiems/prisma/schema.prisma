@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id        String   @id @default(uuid())
+  roleName  String   @unique @map("role_name")
+  users     User[]
+  @@map("roles")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  roleId    String   @map("role_id")
+  role      Role     @relation(fields: [roleId], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+  @@map("users")
+}
+
+model Category {
+  id           String   @id @default(uuid())
+  categoryName String   @unique @map("category_name")
+  active       Boolean  @default(true)
+  items        Item[]
+  @@map("categories")
+}
+
+model Item {
+  id         String   @id @default(uuid())
+  sku        String   @unique
+  itemName   String   @map("item_name")
+  categoryId String   @map("category_id")
+  barcode    String?  @unique
+  active     Boolean  @default(true)
+  category   Category @relation(fields: [categoryId], references: [id])
+  batches    InventoryBatch[]
+  movements  StockMovement[]
+  @@map("items")
+}
+
+model Supplier {
+  id           String           @id @default(uuid())
+  supplierName String           @map("supplier_name")
+  email        String?
+  purchaseOrders PurchaseOrder[]
+  @@map("suppliers")
+}
+
+model Location {
+  id        String  @id @default(uuid())
+  warehouse String
+  zone      String?
+  rack      String?
+  shelf     String?
+  batches   InventoryBatch[]
+  @@map("locations")
+}
+
+model InventoryBatch {
+  id         String   @id @default(uuid())
+  itemId     String   @map("item_id")
+  batchNo    String   @map("batch_no")
+  quantity   Int
+  unitCost   Float    @map("unit_cost")
+  mfgDate    DateTime? @map("mfg_date")
+  expiryDate DateTime @map("expiry_date")
+  locationId String?  @map("location_id")
+  item       Item     @relation(fields: [itemId], references: [id])
+  location   Location? @relation(fields: [locationId], references: [id])
+  @@map("inventory_batches")
+}
+
+model StockMovement {
+  id              String   @id @default(uuid())
+  itemId          String   @map("item_id")
+  movementType    String   @map("movement_type") // RECEIVING | ISSUE | ADJUSTMENT
+  quantity        Int
+  batchId         String?  @map("batch_id")
+  referenceNumber String?  @map("reference_number")
+  requestor       String?
+  department      String?
+  remarks         String?
+  createdBy       String   @map("created_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  item            Item     @relation(fields: [itemId], references: [id])
+  @@map("stock_movements")
+}
+
+model PurchaseOrder {
+  id           String     @id @default(uuid())
+  poNumber     String     @unique @map("po_number")
+  supplierId   String?    @map("supplier_id")
+  status       String     @default("OPEN") // OPEN | RECEIVED | CANCELLED
+  supplier     Supplier?  @relation(fields: [supplierId], references: [id])
+  createdAt    DateTime   @default(now())
+  @@map("purchase_orders")
+}
