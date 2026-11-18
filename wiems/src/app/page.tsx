@@ -1,34 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getDashboard } from "@/lib/api";
+import type { DemoMovement } from "@/lib/demo-store";
 
-type Dashboard = {
-  inventory: { totalSkus: number; totalUnits: number; inventoryValue: number };
-  expiry: { HEALTHY: number; WARNING: number; CRITICAL: number; EXPIRED: number };
-  recentMovements: {
-    id: string;
-    movementType: string;
-    quantity: number;
-    createdAt: string;
-    item: { sku: string; itemName: string };
-  }[];
-};
-
-const statusColors: Record<string, string> = {
-  HEALTHY: "bg-green-100 text-green-800",
-  WARNING: "bg-yellow-100 text-yellow-800",
-  CRITICAL: "bg-orange-100 text-orange-800",
-  EXPIRED: "bg-red-100 text-red-800",
-};
+type Dashboard = Awaited<ReturnType<typeof getDashboard>>;
 
 export default function DashboardPage() {
   const [data, setData] = useState<Dashboard | null>(null);
 
   useEffect(() => {
-    fetch("/api/dashboard")
-      .then((r) => r.json())
-      .then(setData)
-      .catch(() => {});
+    getDashboard().then(setData).catch(() => {});
   }, []);
 
   if (!data) return <p className="text-slate-500">Loading dashboard…</p>;
@@ -73,7 +55,7 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {data.recentMovements.map((m) => (
+              {(data.recentMovements as DemoMovement[]).map((m) => (
                 <tr key={m.id} className="border-t">
                   <td className="px-4 py-2 text-slate-600">
                     {new Date(m.createdAt).toLocaleString()}
@@ -82,10 +64,10 @@ export default function DashboardPage() {
                     <span
                       className={`rounded px-2 py-0.5 text-xs font-medium ${
                         m.movementType === "RECEIVING"
-                          ? statusColors.HEALTHY
+                          ? "bg-green-100 text-green-800"
                           : m.movementType === "ISSUE"
-                            ? statusColors.WARNING
-                            : statusColors.CRITICAL
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-orange-100 text-orange-800"
                       }`}
                     >
                       {m.movementType}

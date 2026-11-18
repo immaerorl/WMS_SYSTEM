@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { issueStock } from "@/lib/api";
 
 export default function StockOutPage() {
   const [form, setForm] = useState({ sku: "", quantity: "", requestor: "", department: "", remarks: "" });
@@ -9,17 +10,12 @@ export default function StockOutPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
-    const res = await fetch("/api/stock-out", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, quantity: Number(form.quantity) }),
-    });
-    const body = await res.json();
-    if (res.ok) {
+    try {
+      await issueStock({ ...form, quantity: Number(form.quantity) });
       setMessage({ ok: true, text: `Issued ${form.quantity} units of ${form.sku} (FEFO).` });
       setForm({ sku: "", quantity: "", requestor: "", department: "", remarks: "" });
-    } else {
-      setMessage({ ok: false, text: body.error });
+    } catch (err) {
+      setMessage({ ok: false, text: err instanceof Error ? err.message : "Failed" });
     }
   };
 

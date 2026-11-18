@@ -1,19 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createItem, getCategories, getItems } from "@/lib/api";
 
-type ItemRow = {
-  id: string;
-  sku: string;
-  itemName: string;
-  barcode: string | null;
-  category: { categoryName: string };
-  totalQuantity: number;
-  totalValue: number;
-  nearestExpiry: string | null;
-};
-
-type Category = { id: string; categoryName: string };
+type ItemRow = Awaited<ReturnType<typeof getItems>>[number];
+type Category = Awaited<ReturnType<typeof getCategories>>[number];
 
 export default function InventoryPage() {
   const [items, setItems] = useState<ItemRow[]>([]);
@@ -22,33 +13,23 @@ export default function InventoryPage() {
   const [form, setForm] = useState({ sku: "", itemName: "", categoryId: "", barcode: "" });
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
-  const load = (kw = "") =>
-    fetch(`/api/items${kw ? `?keyword=${encodeURIComponent(kw)}` : ""}`)
-      .then((r) => r.json())
-      .then(setItems);
+  const load = (kw = "") => getItems(kw).then(setItems);
 
   useEffect(() => {
     load();
-    fetch("/api/categories")
-      .then((r) => r.json())
-      .then(setCategories);
+    getCategories().then(setCategories);
   }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
-    const res = await fetch("/api/items", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    const body = await res.json();
-    if (res.ok) {
+    try {
+      await createItem(form);
       setMessage({ ok: true, text: `Item ${form.sku} created.` });
       setForm({ sku: "", itemName: "", categoryId: "", barcode: "" });
       load();
-    } else {
-      setMessage({ ok: false, text: body.error });
+    } catch (err) {
+      setMessage({ ok: false, text: err instanceof Error ? err.message : "Failed" });
     }
   };
 

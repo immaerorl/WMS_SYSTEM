@@ -1,19 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getExpiryAlerts } from "@/lib/api";
 
-type Alert = {
-  batchId: string;
-  sku: string;
-  itemName: string;
-  category: string;
-  batchNo: string;
-  quantity: number;
-  valueAtRisk: number;
-  expiryDate: string;
-  status: "HEALTHY" | "WARNING" | "CRITICAL" | "EXPIRED";
-  daysLeft: number;
-};
+type Alert = Awaited<ReturnType<typeof getExpiryAlerts>>["alerts"][number];
 
 type Payload = {
   summary: { warning: number; critical: number; expired: number; valueAtRisk: number };
@@ -31,9 +21,7 @@ export default function ExpiryPage() {
   const [data, setData] = useState<Payload | null>(null);
 
   useEffect(() => {
-    fetch("/api/expiry-alerts")
-      .then((r) => r.json())
-      .then(setData);
+    getExpiryAlerts().then(setData);
   }, []);
 
   if (!data) return <p className="text-slate-500">Loading alerts…</p>;

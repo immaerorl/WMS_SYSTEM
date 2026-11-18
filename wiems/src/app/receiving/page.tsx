@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { receiveStock } from "@/lib/api";
 
 export default function ReceivingPage() {
   const [form, setForm] = useState({
@@ -17,20 +18,15 @@ export default function ReceivingPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
-    const res = await fetch("/api/receiving", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    const body = await res.json();
-    if (res.ok) {
+    try {
+      await receiveStock({ ...form, quantity: Number(form.quantity), unitCost: form.unitCost ? Number(form.unitCost) : undefined });
       setMessage({
         ok: true,
         text: `Batch ${form.batchNo} received for ${form.sku} (qty ${form.quantity}).`,
       });
       setForm({ poNumber: "", sku: "", quantity: "", unitCost: "", batchNo: "", mfgDate: "", expiryDate: "" });
-    } else {
-      setMessage({ ok: false, text: body.error });
+    } catch (err) {
+      setMessage({ ok: false, text: err instanceof Error ? err.message : "Failed" });
     }
   };
 

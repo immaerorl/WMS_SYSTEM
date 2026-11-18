@@ -39,4 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-"*.db"  
+*.db
+
+# static build stash / local pages simulation
+.api-stash
+pages-sim
